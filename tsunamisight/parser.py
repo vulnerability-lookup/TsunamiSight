@@ -82,7 +82,6 @@ def first_commit_date(repo_path: Path, plugin_relpath: str) -> datetime | None:
                 "log",
                 "--reverse",
                 "--format=%aD",
-                "--diff-filter=A",
                 "--",
                 plugin_relpath,
             ],
