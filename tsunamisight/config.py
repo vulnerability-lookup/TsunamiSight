@@ -17,7 +17,9 @@ _conf_path = os.environ.get("TSUNAMISIGHT_CONFIG", "tsunamisight/conf_sample.py"
 try:
     _conf = _load(_conf_path)
 except Exception as exc:
-    raise RuntimeError(f"No configuration file provided (path={_conf_path!r}).") from exc
+    raise RuntimeError(
+        f"No configuration file provided (path={_conf_path!r})."
+    ) from exc
 
 
 vulnerability_lookup_base_url = _conf.vulnerability_lookup_base_url

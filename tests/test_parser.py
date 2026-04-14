@@ -3,9 +3,9 @@ from pathlib import Path
 import pytest
 
 from tsunamisight.parser import (
-    extract_cves_from_path,
-    extract_cves_from_java_source,
     extract_cves_for_plugin,
+    extract_cves_from_java_source,
+    extract_cves_from_path,
     normalize_cve,
 )
 
@@ -69,7 +69,9 @@ class TestExtractCvesForPlugin:
         (java_dir / "FooDetector.java").write_text(
             '.setPublisher("CVE").setValue("CVE-2023-99999")'
         )
-        cves = extract_cves_for_plugin(root, plugin_relpath="google/detectors/rce/cve202342793")
+        cves = extract_cves_for_plugin(
+            root, plugin_relpath="google/detectors/rce/cve202342793"
+        )
         assert cves == {"CVE-2023-42793", "CVE-2023-99999"}
 
     def test_skips_test_and_build_dirs(self, tmp_path):
@@ -86,5 +88,7 @@ class TestExtractCvesForPlugin:
         (root / "build" / "libs" / "StaleDetector.java").write_text(
             '.setPublisher("CVE").setValue("CVE-8888-88888")'
         )
-        cves = extract_cves_for_plugin(root, plugin_relpath="google/detectors/rce/cve202342793")
+        cves = extract_cves_for_plugin(
+            root, plugin_relpath="google/detectors/rce/cve202342793"
+        )
         assert cves == {"CVE-2023-42793"}

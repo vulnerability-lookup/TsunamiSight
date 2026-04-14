@@ -23,10 +23,7 @@ def normalize_cve(raw: str) -> str:
 
 
 def extract_cves_from_path(plugin_relpath: str) -> set[str]:
-    return {
-        f"CVE-{year}-{num}"
-        for year, num in PATH_CVE_RE.findall(plugin_relpath)
-    }
+    return {f"CVE-{year}-{num}" for year, num in PATH_CVE_RE.findall(plugin_relpath)}
 
 
 def extract_cves_from_java_source(body: str) -> set[str]:

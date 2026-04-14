@@ -11,7 +11,8 @@ from pathlib import Path
 from pyvulnerabilitylookup import PyVulnerabilityLookup
 
 from tsunamisight import config
-from tsunamisight.monitoring import heartbeat, log as monitoring_log
+from tsunamisight.monitoring import heartbeat
+from tsunamisight.monitoring import log as monitoring_log
 from tsunamisight.parser import (
     discover_plugin_roots,
     extract_cves_for_plugin,
@@ -35,7 +36,14 @@ def _added_plugin_roots_since(repo: Path, since: str) -> set[str]:
     """Roots whose directories had files added within `since` (e.g. '7 days ago')."""
     try:
         result = subprocess.run(
-            ["git", "log", f"--since={since}", "--diff-filter=A", "--name-only", "--format="],
+            [
+                "git",
+                "log",
+                f"--since={since}",
+                "--diff-filter=A",
+                "--name-only",
+                "--format=",
+            ],
             cwd=repo,
             check=True,
             text=True,
@@ -67,7 +75,9 @@ def _iter_plugins(repo: Path, roots_filter: set[str] | None):
 
 
 def main() -> None:
-    logging.basicConfig(level=logging.INFO, format="%(asctime)s %(levelname)s %(message)s")
+    logging.basicConfig(
+        level=logging.INFO, format="%(asctime)s %(levelname)s %(message)s"
+    )
 
     parser = argparse.ArgumentParser(
         prog="TsunamiSight",
@@ -102,7 +112,10 @@ def main() -> None:
     else:
         filter_set = _added_plugin_roots_since(repo, config.incremental_window)
         if not filter_set:
-            logger.info("No new plugin roots in last %s — nothing to do.", config.incremental_window)
+            logger.info(
+                "No new plugin roots in last %s — nothing to do.",
+                config.incremental_window,
+            )
             return
 
     client = PyVulnerabilityLookup(

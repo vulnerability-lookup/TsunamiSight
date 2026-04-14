@@ -24,7 +24,9 @@ def heartbeat(key: str = "process_heartbeat_TsunamiSight") -> None:
         print(f"Heartbeat error: {exc}")
 
 
-def log(level: str = "warning", message: str = "", key: str = "process_logs_TsunamiSight") -> None:
+def log(
+    level: str = "warning", message: str = "", key: str = "process_logs_TsunamiSight"
+) -> None:
     if _client is None:
         return
     entry = {"timestamp": time.time(), "level": level, "message": message}
