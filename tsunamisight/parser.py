@@ -94,7 +94,7 @@ def first_commit_date(repo_path: Path, plugin_relpath: str) -> datetime | None:
             text=True,
             capture_output=True,
         )
-    except subprocess.CalledProcessError:
+    except (subprocess.CalledProcessError, OSError):
         return None
     first_line = result.stdout.splitlines()[0] if result.stdout.strip() else ""
     if not first_line:
