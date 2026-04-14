@@ -11,3 +11,4 @@ dist/
 *.log
 tsunamisight/conf.py
 plugins/
+tsunami-security-scanner-plugins/
