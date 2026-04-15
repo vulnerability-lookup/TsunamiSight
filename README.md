@@ -46,4 +46,11 @@ options:
 
 ## License
 
-GNU General Public License v3 or later. See `COPYING`.
+[TsunamiSight](https://github.com/vulnerability-lookup/TsunamiSight) is licensed under
+[GNU General Public License version 3](https://www.gnu.org/licenses/gpl-3.0.html)
+
+~~~
+Copyright (c) 2026 Computer Incident Response Center Luxembourg (CIRCL)
+Copyright (C) 2026 Philippe Parage - https://github.com/pparage
+~~~
+
