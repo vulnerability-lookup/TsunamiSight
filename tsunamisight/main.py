@@ -14,8 +14,8 @@ from tsunamisight import config
 from tsunamisight.monitoring import heartbeat
 from tsunamisight.monitoring import log as monitoring_log
 from tsunamisight.parser import (
-    discover_plugin_roots,
-    extract_cves_for_plugin,
+    discover_plugins,
+    extract_cves,
     first_commit_date,
 )
 from tsunamisight.sighting import push_sighting
@@ -62,16 +62,16 @@ def _added_plugin_roots_since(repo: Path, since: str) -> set[str]:
 
 
 def _iter_plugins(repo: Path, roots_filter: set[str] | None):
-    for abs_root, rel in discover_plugin_roots(repo):
-        if roots_filter is not None and rel not in roots_filter:
+    for plugin in discover_plugins(repo):
+        if roots_filter is not None and plugin.rel_path not in roots_filter:
             continue
-        cves = extract_cves_for_plugin(abs_root, rel)
+        cves = extract_cves(plugin)
         if not cves:
-            logger.debug("no CVEs extracted for %s — skipping", rel)
+            logger.debug("no CVEs extracted for %s — skipping", plugin.rel_path)
             continue
-        when = first_commit_date(repo, rel)
+        when = first_commit_date(repo, plugin.rel_path)
         for cve in sorted(cves):
-            yield rel, cve, when
+            yield plugin.rel_path, cve, when, plugin.kind
 
 
 def main() -> None:
@@ -124,7 +124,7 @@ def main() -> None:
     )
 
     emitted = 0
-    for rel, cve, when in _iter_plugins(repo, filter_set):
+    for rel, cve, when, kind in _iter_plugins(repo, filter_set):
         logger.info("NEW - %s -> %s (first commit: %s)", rel, cve, when)
         if args.dry_run:
             emitted += 1
@@ -135,6 +135,7 @@ def main() -> None:
             cve=cve,
             when=when,
             sighting_type=config.sighting_type,
+            kind=kind,
         )
         emitted += 1
 
