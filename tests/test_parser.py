@@ -103,16 +103,31 @@ class TestIsTemplatedPluginFile:
     @pytest.mark.parametrize(
         "rel,expected",
         [
-            ("templated/templateddetector/plugins/cve/2025/Bar_CVE_2025_0001.textproto", True),
-            ("templated/templateddetector/plugins/exposedui/Foo_ExposedUi.textproto", True),
+            (
+                "templated/templateddetector/plugins/cve/2025/Bar_CVE_2025_0001.textproto",
+                True,
+            ),
+            (
+                "templated/templateddetector/plugins/exposedui/Foo_ExposedUi.textproto",
+                True,
+            ),
             # test companion -> excluded
-            ("templated/templateddetector/plugins/cve/2025/Bar_CVE_2025_0001_test.textproto", False),
+            (
+                "templated/templateddetector/plugins/cve/2025/Bar_CVE_2025_0001_test.textproto",
+                False,
+            ),
             # out-of-tree data file -> excluded
-            ("google/detectors/credentials/x/src/main/resources/data/service_default_credentials.textproto", False),
+            (
+                "google/detectors/credentials/x/src/main/resources/data/service_default_credentials.textproto",
+                False,
+            ),
             # build/test path segments -> excluded
             ("templated/templateddetector/plugins/build/Gen.textproto", False),
             # not a textproto -> excluded
-            ("templated/templateddetector/plugins/cve/2025/Bar_CVE_2025_0001.java", False),
+            (
+                "templated/templateddetector/plugins/cve/2025/Bar_CVE_2025_0001.java",
+                False,
+            ),
         ],
     )
     def test_predicate(self, rel, expected):
@@ -149,18 +164,41 @@ class TestExtractCvesForTemplated:
 class TestDiscoverPlugins:
     def _make_repo(self, tmp_path):
         # java plugin
-        jdir = tmp_path / "community" / "detectors" / "foo" / "src" / "main" / "java" / "com" / "x"
+        jdir = (
+            tmp_path
+            / "community"
+            / "detectors"
+            / "foo"
+            / "src"
+            / "main"
+            / "java"
+            / "com"
+            / "x"
+        )
         jdir.mkdir(parents=True)
-        (jdir / "FooDetector.java").write_text('.setPublisher("CVE").setValue("CVE-2020-1111")')
+        (jdir / "FooDetector.java").write_text(
+            '.setPublisher("CVE").setValue("CVE-2020-1111")'
+        )
         # templated plugin + its test companion
         tdir = tmp_path / "templated" / "templateddetector" / "plugins" / "cve" / "2025"
         tdir.mkdir(parents=True)
         (tdir / "Bar_CVE_2025_0001.textproto").write_text('value: "CVE-2025-0001"')
         (tdir / "Bar_CVE_2025_0001_test.textproto").write_text('value: "CVE-9999-9999"')
         # out-of-tree non-plugin textproto
-        odir = tmp_path / "google" / "detectors" / "creds" / "src" / "main" / "resources" / "data"
+        odir = (
+            tmp_path
+            / "google"
+            / "detectors"
+            / "creds"
+            / "src"
+            / "main"
+            / "resources"
+            / "data"
+        )
         odir.mkdir(parents=True)
-        (odir / "service_default_credentials.textproto").write_text("service_default_credentials {}")
+        (odir / "service_default_credentials.textproto").write_text(
+            "service_default_credentials {}"
+        )
         return tmp_path
 
     def test_discovers_java_and_templated_only(self, tmp_path):
@@ -184,7 +222,9 @@ class TestExtractCvesDispatch:
         root = tmp_path / "community" / "detectors" / "foo"
         jdir = root / "src" / "main" / "java"
         jdir.mkdir(parents=True)
-        (jdir / "FooDetector.java").write_text('.setPublisher("CVE").setValue("CVE-2020-1111")')
+        (jdir / "FooDetector.java").write_text(
+            '.setPublisher("CVE").setValue("CVE-2020-1111")'
+        )
         plugin = Plugin(abs_path=root, rel_path="community/detectors/foo", kind="java")
         assert extract_cves(plugin) == {"CVE-2020-1111"}
 
