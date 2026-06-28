@@ -5,6 +5,7 @@ import pytest
 from tsunamisight.parser import (
     Plugin,
     discover_plugins,
+    extract_cves,
     extract_cves_for_plugin,
     extract_cves_for_templated,
     extract_cves_from_java_source,
@@ -176,3 +177,23 @@ class TestDiscoverPlugins:
         plugins = discover_plugins(repo)
         assert all(isinstance(p, Plugin) for p in plugins)
         assert [p.rel_path for p in plugins] == sorted(p.rel_path for p in plugins)
+
+
+class TestExtractCvesDispatch:
+    def test_java_kind_routes_to_java_extractor(self, tmp_path):
+        root = tmp_path / "community" / "detectors" / "foo"
+        jdir = root / "src" / "main" / "java"
+        jdir.mkdir(parents=True)
+        (jdir / "FooDetector.java").write_text('.setPublisher("CVE").setValue("CVE-2020-1111")')
+        plugin = Plugin(abs_path=root, rel_path="community/detectors/foo", kind="java")
+        assert extract_cves(plugin) == {"CVE-2020-1111"}
+
+    def test_templated_kind_routes_to_templated_extractor(self, tmp_path):
+        f = tmp_path / "Bar_CVE_2025_0001.textproto"
+        f.write_text('value: "CVE-2025-0001"')
+        plugin = Plugin(
+            abs_path=f,
+            rel_path="templated/templateddetector/plugins/cve/2025/Bar_CVE_2025_0001.textproto",
+            kind="templated",
+        )
+        assert extract_cves(plugin) == {"CVE-2025-0001"}

@@ -87,6 +87,12 @@ def extract_cves_for_templated(plugin_file: Path, plugin_relpath: str) -> set[st
     return cves
 
 
+def extract_cves(plugin: Plugin) -> set[str]:
+    if plugin.kind == "templated":
+        return extract_cves_for_templated(plugin.abs_path, plugin.rel_path)
+    return extract_cves_for_plugin(plugin.abs_path, plugin.rel_path)
+
+
 def discover_plugin_roots(repo_path: Path) -> list[tuple[Path, str]]:
     """Return list of (absolute_root, relative_path_from_repo) for each plugin directory.
 
