@@ -3,6 +3,8 @@ from pathlib import Path
 import pytest
 
 from tsunamisight.parser import (
+    Plugin,
+    discover_plugins,
     extract_cves_for_plugin,
     extract_cves_for_templated,
     extract_cves_from_java_source,
@@ -141,3 +143,36 @@ class TestExtractCvesForTemplated:
             plugin_relpath="templated/templateddetector/plugins/cve/2025/Bar_CVE_2025_0001.textproto",
         )
         assert cves == {"CVE-2025-0001"}
+
+
+class TestDiscoverPlugins:
+    def _make_repo(self, tmp_path):
+        # java plugin
+        jdir = tmp_path / "community" / "detectors" / "foo" / "src" / "main" / "java" / "com" / "x"
+        jdir.mkdir(parents=True)
+        (jdir / "FooDetector.java").write_text('.setPublisher("CVE").setValue("CVE-2020-1111")')
+        # templated plugin + its test companion
+        tdir = tmp_path / "templated" / "templateddetector" / "plugins" / "cve" / "2025"
+        tdir.mkdir(parents=True)
+        (tdir / "Bar_CVE_2025_0001.textproto").write_text('value: "CVE-2025-0001"')
+        (tdir / "Bar_CVE_2025_0001_test.textproto").write_text('value: "CVE-9999-9999"')
+        # out-of-tree non-plugin textproto
+        odir = tmp_path / "google" / "detectors" / "creds" / "src" / "main" / "resources" / "data"
+        odir.mkdir(parents=True)
+        (odir / "service_default_credentials.textproto").write_text("service_default_credentials {}")
+        return tmp_path
+
+    def test_discovers_java_and_templated_only(self, tmp_path):
+        repo = self._make_repo(tmp_path)
+        plugins = discover_plugins(repo)
+        by_rel = {p.rel_path: p.kind for p in plugins}
+        assert by_rel == {
+            "community/detectors/foo": "java",
+            "templated/templateddetector/plugins/cve/2025/Bar_CVE_2025_0001.textproto": "templated",
+        }
+
+    def test_returns_plugin_instances_sorted(self, tmp_path):
+        repo = self._make_repo(tmp_path)
+        plugins = discover_plugins(repo)
+        assert all(isinstance(p, Plugin) for p in plugins)
+        assert [p.rel_path for p in plugins] == sorted(p.rel_path for p in plugins)
