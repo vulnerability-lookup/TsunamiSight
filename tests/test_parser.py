@@ -6,6 +6,7 @@ from tsunamisight.parser import (
     extract_cves_for_plugin,
     extract_cves_from_java_source,
     extract_cves_from_path,
+    is_templated_plugin_file,
     normalize_cve,
 )
 
@@ -92,3 +93,23 @@ class TestExtractCvesForPlugin:
             root, plugin_relpath="google/detectors/rce/cve202342793"
         )
         assert cves == {"CVE-2023-42793"}
+
+
+class TestIsTemplatedPluginFile:
+    @pytest.mark.parametrize(
+        "rel,expected",
+        [
+            ("templated/templateddetector/plugins/cve/2025/Bar_CVE_2025_0001.textproto", True),
+            ("templated/templateddetector/plugins/exposedui/Foo_ExposedUi.textproto", True),
+            # test companion -> excluded
+            ("templated/templateddetector/plugins/cve/2025/Bar_CVE_2025_0001_test.textproto", False),
+            # out-of-tree data file -> excluded
+            ("google/detectors/credentials/x/src/main/resources/data/service_default_credentials.textproto", False),
+            # build/test path segments -> excluded
+            ("templated/templateddetector/plugins/build/Gen.textproto", False),
+            # not a textproto -> excluded
+            ("templated/templateddetector/plugins/cve/2025/Bar_CVE_2025_0001.java", False),
+        ],
+    )
+    def test_predicate(self, rel, expected):
+        assert is_templated_plugin_file(rel) is expected

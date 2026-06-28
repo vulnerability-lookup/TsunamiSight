@@ -17,6 +17,17 @@ SETVAL_ANY_CVE_RE = re.compile(r'setValue\(\s*"(CVE[_-]\d{4}[_-]\d{4,7})"\s*\)')
 SKIP_PATH_SEGMENTS = ("/test/", "/build/")
 
 
+def is_templated_plugin_file(rel_path: str) -> bool:
+    """True for a real templated plugin file (posix repo-relative path)."""
+    if not rel_path.endswith(".textproto"):
+        return False
+    if rel_path.endswith("_test.textproto"):
+        return False
+    if any(seg in f"/{rel_path}" for seg in SKIP_PATH_SEGMENTS):
+        return False
+    return "/templateddetector/plugins/" in f"/{rel_path}"
+
+
 def normalize_cve(raw: str) -> str:
     """CVE_2023_42793 / cve-2023-42793 / CVE-2023-42793 -> CVE-2023-42793."""
     return raw.upper().replace("_", "-")
