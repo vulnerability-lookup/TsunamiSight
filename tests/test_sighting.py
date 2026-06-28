@@ -3,7 +3,7 @@ from unittest.mock import MagicMock
 
 import pytest
 
-from tsunamisight.sighting import push_sighting
+from tsunamisight.sighting import build_source_url, push_sighting
 
 
 @pytest.fixture
@@ -13,6 +13,34 @@ def fake_client():
 
 def _payload(client):
     return client.create_sighting.call_args.kwargs["sighting"]
+
+
+def test_build_source_url_templated_uses_blob():
+    rel = "templated/templateddetector/plugins/cve/2025/Bar_CVE_2025_0001.textproto"
+    assert build_source_url(rel, kind="templated") == (
+        "https://github.com/google/tsunami-security-scanner-plugins/blob/master/" + rel
+    )
+
+
+def test_build_source_url_java_uses_tree():
+    rel = "community/detectors/foo"
+    assert build_source_url(rel, kind="java") == (
+        "https://github.com/google/tsunami-security-scanner-plugins/tree/master/" + rel
+    )
+
+
+def test_push_sighting_templated_payload_uses_blob(fake_client):
+    fake_client.create_sighting.return_value = {"message": "created"}
+    push_sighting(
+        fake_client,
+        plugin_relpath="templated/templateddetector/plugins/cve/2025/Bar_CVE_2025_0001.textproto",
+        cve="CVE-2025-0001",
+        when=datetime(2024, 1, 1, tzinfo=timezone.utc),
+        sighting_type="published-proof-of-concept",
+        kind="templated",
+    )
+    payload = _payload(fake_client)
+    assert "/blob/master/" in payload["source"]
 
 
 def test_push_sighting_builds_correct_payload(fake_client):

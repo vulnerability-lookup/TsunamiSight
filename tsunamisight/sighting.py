@@ -10,11 +10,12 @@ from tsunamisight.monitoring import log as monitoring_log
 
 logger = logging.getLogger(__name__)
 
-SOURCE_BASE = "https://github.com/google/tsunami-security-scanner-plugins/tree/master/"
+SOURCE_BASE = "https://github.com/google/tsunami-security-scanner-plugins/"
 
 
-def build_source_url(plugin_relpath: str) -> str:
-    return SOURCE_BASE + plugin_relpath.lstrip("/")
+def build_source_url(plugin_relpath: str, kind: str = "java") -> str:
+    ref = "blob" if kind == "templated" else "tree"
+    return f"{SOURCE_BASE}{ref}/master/{plugin_relpath.lstrip('/')}"
 
 
 def push_sighting(
@@ -24,10 +25,11 @@ def push_sighting(
     cve: str,
     when: datetime,
     sighting_type: str,
+    kind: str = "java",
 ) -> None:
     sighting = {
         "type": sighting_type,
-        "source": build_source_url(plugin_relpath),
+        "source": build_source_url(plugin_relpath, kind),
         "vulnerability": cve,
         "creation_timestamp": when,
     }
