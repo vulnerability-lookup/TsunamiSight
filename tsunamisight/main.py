@@ -17,6 +17,7 @@ from tsunamisight.parser import (
     discover_plugins,
     extract_cves,
     first_commit_date,
+    is_templated_plugin_file,
 )
 from tsunamisight.sighting import push_sighting
 
@@ -32,15 +33,28 @@ def _git_pull(repo: Path) -> bool:
         return False
 
 
+def _added_roots_from_names(names) -> set[str]:
+    """Parse `git log --name-only` lines into plugin unit keys."""
+    roots: set[str] = set()
+    for line in names:
+        line = line.strip()
+        if not line:
+            continue
+        if "/src/main/java/" in line:
+            roots.add(line.split("/src/main/java/")[0])
+        elif is_templated_plugin_file(line):
+            roots.add(line)
+    return roots
+
+
 def _added_plugin_roots_since(repo: Path, since: str) -> set[str]:
-    """Roots whose directories had files added within `since` (e.g. '7 days ago')."""
+    """Plugin unit keys touched within `since` (e.g. '7 days ago')."""
     try:
         result = subprocess.run(
             [
                 "git",
                 "log",
                 f"--since={since}",
-                "--diff-filter=A",
                 "--name-only",
                 "--format=",
             ],
@@ -52,13 +66,7 @@ def _added_plugin_roots_since(repo: Path, since: str) -> set[str]:
     except subprocess.CalledProcessError as exc:
         logger.warning("git log failed: %s", exc)
         return set()
-    roots: set[str] = set()
-    for line in result.stdout.splitlines():
-        line = line.strip()
-        if "/src/main/java/" not in line:
-            continue
-        roots.add(line.split("/src/main/java/")[0])
-    return roots
+    return _added_roots_from_names(result.stdout.splitlines())
 
 
 def _iter_plugins(repo: Path, roots_filter: set[str] | None):
