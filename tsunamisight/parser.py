@@ -13,6 +13,7 @@ SETPUB_CVE_RE = re.compile(
     r'setPublisher\(\s*"CVE"\s*\)\s*\.\s*setValue\(\s*"(CVE-\d{4}-\d{4,7})"\s*\)'
 )
 SETVAL_ANY_CVE_RE = re.compile(r'setValue\(\s*"(CVE[_-]\d{4}[_-]\d{4,7})"\s*\)')
+VALUE_CVE_RE = re.compile(r'value:\s*"(CVE[_-]\d{4}[_-]\d{4,7})"')
 
 SKIP_PATH_SEGMENTS = ("/test/", "/build/")
 
@@ -63,6 +64,17 @@ def extract_cves_for_plugin(plugin_root: Path, plugin_relpath: str) -> set[str]:
             cves |= extract_cves_from_java_source(java_file.read_text(errors="ignore"))
         except OSError:
             continue
+    return cves
+
+
+def extract_cves_for_templated(plugin_file: Path, plugin_relpath: str) -> set[str]:
+    cves = extract_cves_from_path(plugin_relpath)
+    try:
+        body = plugin_file.read_text(errors="ignore")
+    except OSError:
+        return cves
+    for raw in VALUE_CVE_RE.findall(body):
+        cves.add(normalize_cve(raw))
     return cves
 
 

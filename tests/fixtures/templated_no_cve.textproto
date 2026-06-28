@@ -1,0 +1,12 @@
+# proto-message: TemplatedPlugin
+info: {
+  name: "NODERED_EXPOSED_UI"
+}
+finding: {
+  main_id: {
+    publisher: "GOOGLE"
+    value: "NODERED_EXPOSED_UI"
+  }
+  severity: CRITICAL
+  title: "Exposed Node-RED UI"
+}

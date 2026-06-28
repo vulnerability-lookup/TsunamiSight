@@ -1,0 +1,19 @@
+# proto-file: proto/templated_plugin.proto
+# proto-message: TemplatedPlugin
+info: {
+  type: VULN_DETECTION
+  name: "ApacheHTTPd_CVE_2021_41773"
+  version: "1.0"
+}
+finding: {
+  main_id: {
+    publisher: "GOOGLE"
+    value: "CVE_2021_41773"
+  }
+  related_id: {
+    publisher: "CVE"
+    value: "CVE-2021-41773"
+  }
+  severity: CRITICAL
+  title: "Path traversal in Apache HTTPd (CVE-2021-41773)"
+}

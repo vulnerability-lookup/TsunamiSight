@@ -4,6 +4,7 @@ import pytest
 
 from tsunamisight.parser import (
     extract_cves_for_plugin,
+    extract_cves_for_templated,
     extract_cves_from_java_source,
     extract_cves_from_path,
     is_templated_plugin_file,
@@ -113,3 +114,30 @@ class TestIsTemplatedPluginFile:
     )
     def test_predicate(self, rel, expected):
         assert is_templated_plugin_file(rel) is expected
+
+
+class TestExtractCvesForTemplated:
+    def test_value_fields_and_filename(self):
+        f = FIXTURES / "templated_cve.textproto"
+        cves = extract_cves_for_templated(
+            f,
+            plugin_relpath="templated/templateddetector/plugins/cve/2021/ApacheHTTPd_CVE_2021_41773.textproto",
+        )
+        # underscore main_id + dashed related_id + filename all normalize to one CVE
+        assert cves == {"CVE-2021-41773"}
+
+    def test_no_cve_plugin_yields_empty(self):
+        f = FIXTURES / "templated_no_cve.textproto"
+        cves = extract_cves_for_templated(
+            f,
+            plugin_relpath="templated/templateddetector/plugins/exposedui/NodeRed_ExposedUi.textproto",
+        )
+        assert cves == set()
+
+    def test_unreadable_file_falls_back_to_path_cves(self, tmp_path):
+        missing = tmp_path / "gone.textproto"  # never created
+        cves = extract_cves_for_templated(
+            missing,
+            plugin_relpath="templated/templateddetector/plugins/cve/2025/Bar_CVE_2025_0001.textproto",
+        )
+        assert cves == {"CVE-2025-0001"}
