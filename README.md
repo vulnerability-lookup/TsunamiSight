@@ -7,8 +7,10 @@ repository and publishes them as
 on a Vulnerability-Lookup instance.
 
 Each committed Tsunami detector is a compiled, executable proof-of-concept for
-a specific vulnerability. TsunamiSight emits one sighting per `(plugin, CVE)`
-pair with the default type `published-proof-of-concept`.
+a specific vulnerability. Google's newer **templated** plugins (`.textproto`
+files under `templated/templateddetector/plugins/`) are also parsed for CVE
+sightings. TsunamiSight emits one sighting per `(plugin, CVE)` pair with the
+default type `published-proof-of-concept`.
 
 ## Installation
 

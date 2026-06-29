@@ -41,11 +41,11 @@ pre-commit run --all-files
 
 The CLI entry point is `tsunamisight/main.py:main`, registered as the `TsunamiSight` console script.
 
-**Flow**: `main` loads config -> pulls the tsunami-plugins git repo -> discovers plugin roots (directories with `*Detector.java` under `src/main/java/`) -> extracts CVEs from path names and Java source -> looks up first commit date per plugin -> pushes sightings to Vulnerability-Lookup (or prints in dry-run mode).
+**Flow**: `main` loads config -> pulls the tsunami-plugins git repo -> discovers plugins — both Java detector directories (`*Detector.java` under `src/main/java/`) and templated single-file `.textproto` plugins under `templated/templateddetector/plugins/` — -> extracts CVEs from path names and plugin source -> looks up first commit date per plugin -> pushes sightings to Vulnerability-Lookup (or prints in dry-run mode).
 
 **Modules**:
 - `main.py` — CLI args, git operations, orchestration loop. Two modes: `--init` (full sweep) vs incremental (only plugins with files added in the configured window).
-- `parser.py` — CVE extraction via regex (`PATH_CVE_RE` for path segments, `SETPUB_CVE_RE`/`SETVAL_ANY_CVE_RE` for Java source). Also handles plugin root discovery and first-commit-date lookup via git.
+- `parser.py` — Unified plugin discovery via `discover_plugins` (returns both Java detector dirs and templated `.textproto` files). CVE extraction via `extract_cves` (kind dispatcher): for Java plugins uses regex (`PATH_CVE_RE` for path segments, `SETPUB_CVE_RE`/`SETVAL_ANY_CVE_RE` for Java source); for templated plugins reads CVEs from the filename and from structured `value:` fields. Also handles first-commit-date lookup via git.
 - `sighting.py` — Builds sighting dicts and calls `PyVulnerabilityLookup.create_sighting`. Handles duplicate detection from API response messages.
 - `config.py` — Dynamically imports a user config Python file from the path in `TSUNAMISIGHT_CONFIG` env var. Falls back to `conf_sample.py`.
 - `monitoring.py` — Optional Valkey heartbeat and log forwarding. Silently disabled if Valkey is unreachable or `heartbeat_enabled` is false.

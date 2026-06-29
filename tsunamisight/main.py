@@ -14,9 +14,10 @@ from tsunamisight import config
 from tsunamisight.monitoring import heartbeat
 from tsunamisight.monitoring import log as monitoring_log
 from tsunamisight.parser import (
-    discover_plugin_roots,
-    extract_cves_for_plugin,
+    discover_plugins,
+    extract_cves,
     first_commit_date,
+    is_templated_plugin_file,
 )
 from tsunamisight.sighting import push_sighting
 
@@ -32,15 +33,28 @@ def _git_pull(repo: Path) -> bool:
         return False
 
 
+def _added_roots_from_names(names) -> set[str]:
+    """Parse `git log --name-only` lines into plugin unit keys."""
+    roots: set[str] = set()
+    for line in names:
+        line = line.strip()
+        if not line:
+            continue
+        if "/src/main/java/" in line:
+            roots.add(line.split("/src/main/java/")[0])
+        elif is_templated_plugin_file(line):
+            roots.add(line)
+    return roots
+
+
 def _added_plugin_roots_since(repo: Path, since: str) -> set[str]:
-    """Roots whose directories had files added within `since` (e.g. '7 days ago')."""
+    """Plugin unit keys touched within `since` (e.g. '7 days ago')."""
     try:
         result = subprocess.run(
             [
                 "git",
                 "log",
                 f"--since={since}",
-                "--diff-filter=A",
                 "--name-only",
                 "--format=",
             ],
@@ -52,26 +66,20 @@ def _added_plugin_roots_since(repo: Path, since: str) -> set[str]:
     except subprocess.CalledProcessError as exc:
         logger.warning("git log failed: %s", exc)
         return set()
-    roots: set[str] = set()
-    for line in result.stdout.splitlines():
-        line = line.strip()
-        if "/src/main/java/" not in line:
-            continue
-        roots.add(line.split("/src/main/java/")[0])
-    return roots
+    return _added_roots_from_names(result.stdout.splitlines())
 
 
 def _iter_plugins(repo: Path, roots_filter: set[str] | None):
-    for abs_root, rel in discover_plugin_roots(repo):
-        if roots_filter is not None and rel not in roots_filter:
+    for plugin in discover_plugins(repo):
+        if roots_filter is not None and plugin.rel_path not in roots_filter:
             continue
-        cves = extract_cves_for_plugin(abs_root, rel)
+        cves = extract_cves(plugin)
         if not cves:
-            logger.debug("no CVEs extracted for %s — skipping", rel)
+            logger.debug("no CVEs extracted for %s — skipping", plugin.rel_path)
             continue
-        when = first_commit_date(repo, rel)
+        when = first_commit_date(repo, plugin.rel_path)
         for cve in sorted(cves):
-            yield rel, cve, when
+            yield plugin.rel_path, cve, when, plugin.kind
 
 
 def main() -> None:
@@ -124,7 +132,7 @@ def main() -> None:
     )
 
     emitted = 0
-    for rel, cve, when in _iter_plugins(repo, filter_set):
+    for rel, cve, when, kind in _iter_plugins(repo, filter_set):
         logger.info("NEW - %s -> %s (first commit: %s)", rel, cve, when)
         if args.dry_run:
             emitted += 1
@@ -135,6 +143,7 @@ def main() -> None:
             cve=cve,
             when=when,
             sighting_type=config.sighting_type,
+            kind=kind,
         )
         emitted += 1
 

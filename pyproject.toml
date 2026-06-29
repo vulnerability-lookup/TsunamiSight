@@ -4,7 +4,7 @@ build-backend = "poetry.core.masonry.api"
 
 [project]
 name = "TsunamiSight"
-version = "0.1.0"
+version = "0.1.1"
 description = "A client that extracts vulnerability observations from Google's Tsunami Security Scanner plugin repository and pushes them to a Vulnerability-Lookup instance."
 authors = [
     {name = "Philippe Parage", email = "philippe@ppa.lu"}
